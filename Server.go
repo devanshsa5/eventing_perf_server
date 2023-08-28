@@ -33,6 +33,45 @@ func handlePost(delayMilliseconds uint16, filePath string) http.HandlerFunc {
 	}
 }
 
+func handlePostImage(delayMilliseconds uint16 ) http.HandlerFunc{
+
+return func(w http.ResponseWriter, r *http.Request) {
+	time.Sleep(time.Duration(delayMilliseconds) * time.Millisecond)
+	w.Header().Set("Content-Type", "image/jpeg")
+
+	imagePath := "100kb_image.jpg"
+	imageFile, err := os.Open(imagePath)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	defer imageFile.Close()
+
+	imageFileInfo, err := imageFile.Stat()
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	// Allocate a buffer to hold the image data
+	imageData := make([]byte, imageFileInfo.Size())
+
+	// Read the image data into the buffer
+	_, err = imageFile.Read(imageData)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+
+	// Write the image data to the response writer
+	_, err = w.Write(imageData)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+}
+}
 
 func main() {
 	r := mux.NewRouter()
@@ -44,19 +83,26 @@ func main() {
 	r.HandleFunc("/cgi-bin/text/1kb_text_200ms", handlePost(200, textFilePath)).Methods("POST")
 	r.HandleFunc("/cgi-bin/json/1kb_text_200ms", handlePost(200, jsonFilePath)).Methods("POST")
 	r.HandleFunc("/cgi-bin/1kb_text.py", handlePost(0, textFilePath)).Methods("POST")
+	r.HandleFunc("/cgi-bin/json/1kb_text_10s", handlePost(10000, jsonFilePath)).Methods("POST")
+	r.HandleFunc("/cgi-bin/image/100kb_image_200ms", handlePostImage(200)).Methods("POST")
+	r.HandleFunc("/cgi-bin/json/1kb_text_20ms", handlePost(20, jsonFilePath)).Methods("POST")
+	r.HandleFunc("/cgi-bin/json/1kb_text_2s", handlePost(2000, jsonFilePath)).Methods("POST")
+
+
+	
 
 	httpServer := &http.Server{
 		Addr:         ":8080", // HTTP port
 		Handler:      r,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
 	}
 
 	httpsServer := &http.Server{
 		Addr:         ":8443", // HTTPS port
 		Handler:      r,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
 	}
 
 	go func() {
