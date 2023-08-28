@@ -25,24 +25,25 @@ func readFile(w http.ResponseWriter, r *http.Request, filePath string){
 	w.WriteHeader(http.StatusOK)
 	w.Write(fileData)
 }
-func handlePost1kbText200ms(w http.ResponseWriter, r *http.Request) {
-	delayMilliseconds := 200
-	time.Sleep(time.Duration(delayMilliseconds) * time.Millisecond)
-	readFile(w,r,"1Kb.txt")
-}
-func handlePost1kbJSON200ms(w http.ResponseWriter, r *http.Request) {
-	delayMilliseconds := 200
-	time.Sleep(time.Duration(delayMilliseconds) * time.Millisecond)
-	readFile(w,r,"1Kb.json")
+
+func handlePost(delayMilliseconds uint16, filePath string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(time.Duration(delayMilliseconds) * time.Millisecond)
+		readFile(w,r,filePath)
+	}
 }
 
 
 func main() {
 	r := mux.NewRouter()
+	jsonFilePath := "/root/eventing_perf_server/1Kb.json"
+	textFilePath := "/root/eventing_perf_server/1Kb.txt"
+	
 
-	r.HandleFunc("/cgi-bin/text/1kb_text_200ms", handlePost1kbText200ms).Methods("POST")
-	r.HandleFunc("/cgi-bin/json/1kb_text_200ms", handlePost1kbJSON200ms).Methods("POST")
 
+	r.HandleFunc("/cgi-bin/text/1kb_text_200ms", handlePost(200, textFilePath)).Methods("POST")
+	r.HandleFunc("/cgi-bin/json/1kb_text_200ms", handlePost(200, jsonFilePath)).Methods("POST")
+	r.HandleFunc("/cgi-bin/1kb_text.py", handlePost(0, textFilePath)).Methods("POST")
 
 	httpServer := &http.Server{
 		Addr:         ":8080", // HTTP port
@@ -68,7 +69,7 @@ func main() {
 
 	go func() {
 		fmt.Println("Starting HTTPS server on port 8443...")
-		err := httpsServer.ListenAndServeTLS("cert.pem", "key.pem")
+		err := httpsServer.ListenAndServeTLS("/usr/cert/cert.pem", "/usr/cert/key.pem")
 		if err != nil {
 			fmt.Println("Error starting HTTPS server:", err)
 		}
