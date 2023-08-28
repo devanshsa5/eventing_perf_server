@@ -82,7 +82,7 @@ func main() {
 
 	r.HandleFunc("/cgi-bin/text/1kb_text_200ms", handlePost(200, textFilePath)).Methods("POST")
 	r.HandleFunc("/cgi-bin/json/1kb_text_200ms", handlePost(200, jsonFilePath)).Methods("POST")
-	r.HandleFunc("/cgi-bin/1kb_text.py", handlePost(0, textFilePath)).Methods("POST")
+	r.HandleFunc("/cgi-bin/1kb_text", handlePost(0, textFilePath)).Methods("POST")
 	r.HandleFunc("/cgi-bin/json/1kb_text_10s", handlePost(10000, jsonFilePath)).Methods("POST")
 	r.HandleFunc("/cgi-bin/image/100kb_image_200ms", handlePostImage(200)).Methods("POST")
 	r.HandleFunc("/cgi-bin/json/1kb_text_20ms", handlePost(20, jsonFilePath)).Methods("POST")
