@@ -4,22 +4,44 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+	"os"
 	"github.com/gorilla/mux"
 )
-
-func handlePostRequest(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Received POST request")
+func readFile(w http.ResponseWriter, r *http.Request, filePath string){
+	w.Header().Set("Content-Type", "application/json")
+	file, err := os.Open(filePath)
+	if err != nil {
+		http.Error(w, "Error opening file", http.StatusInternalServerError)
+		return
+	}
+	defer file.Close()
+	fileInfo, _ := file.Stat()
+	fileData := make([]byte, fileInfo.Size())
+	_, err = file.Read(fileData)
+	if err != nil {
+		http.Error(w, "Error reading file", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(fileData)
 }
-func handlePostRequest2(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Received POST request")
+func handlePost1kbText200ms(w http.ResponseWriter, r *http.Request) {
+	delayMilliseconds := 200
+	time.Sleep(time.Duration(delayMilliseconds) * time.Millisecond)
+	readFile(w,r,"1Kb.txt")
+}
+func handlePost1kbJSON200ms(w http.ResponseWriter, r *http.Request) {
+	delayMilliseconds := 200
+	time.Sleep(time.Duration(delayMilliseconds) * time.Millisecond)
+	readFile(w,r,"1Kb.json")
 }
 
 
 func main() {
 	r := mux.NewRouter()
 
-	r.HandleFunc("/post", handlePostRequest).Methods("POST")
-	r.HandleFunc("/post2", handlePostRequest2).Methods("POST")
+	r.HandleFunc("/cgi-bin/text/1kb_text_200ms", handlePost1kbText200ms).Methods("POST")
+	r.HandleFunc("/cgi-bin/json/1kb_text_200ms", handlePost1kbJSON200ms).Methods("POST")
 
 
 	httpServer := &http.Server{
