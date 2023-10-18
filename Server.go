@@ -6,9 +6,15 @@ import (
 	"time"
 	"os"
 	"github.com/gorilla/mux"
+	"strings"
 )
 func readFile(w http.ResponseWriter, r *http.Request, filePath string){
-	w.Header().Set("Content-Type", "application/json")
+	
+	if strings.Contains(filePath, ".txt") {
+		w.Header().Set("Content-Type", "plain/text")
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+	}
 	file, err := os.Open(filePath)
 	if err != nil {
 		http.Error(w, "Error opening file", http.StatusInternalServerError)
