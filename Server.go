@@ -1,12 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net/http"
-	"time"
 	"os"
-	"github.com/gorilla/mux"
 	"strings"
+	"time"
+	"github.com/gorilla/mux"
 )
 func readFile(w http.ResponseWriter, r *http.Request, filePath string){
 	
@@ -32,10 +34,38 @@ func readFile(w http.ResponseWriter, r *http.Request, filePath string){
 	w.Write(fileData)
 }
 
+func createVectorFile(w http.ResponseWriter, r *http.Request) {
+	// Set the Content-Type to application/json
+	w.Header().Set("Content-Type", "application/json")
+	rand.Seed(time.Now().UnixNano()) // Seed the random number generator
+	randomArray := make([]float32, 1536) // Example array size of 10
+	for i := range randomArray {
+		randomArray[i] = rand.Float32() // Generate random float32 value
+	}
+
+	// Create a response map
+	response := map[string]interface{}{
+		"embeddings": randomArray,
+	}
+
+	// Encode the response map as JSON
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, "Error encoding JSON response", http.StatusInternalServerError)
+	}
+}
+
 func handlePost(delayMilliseconds uint16, filePath string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(time.Duration(delayMilliseconds) * time.Millisecond)
 		readFile(w,r,filePath)
+	}
+}
+
+func handlePostEmbedding(delayMilliseconds uint16) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(time.Duration(delayMilliseconds) * time.Millisecond)
+		createVectorFile(w, r)
 	}
 }
 
@@ -93,6 +123,7 @@ func main() {
 	r.HandleFunc("/cgi-bin/image/100kb_image_200ms", handlePostImage(200)).Methods("POST")
 	r.HandleFunc("/cgi-bin/json/1kb_text_20ms", handlePost(20, jsonFilePath)).Methods("POST")
 	r.HandleFunc("/cgi-bin/json/1kb_text_2s", handlePost(2000, jsonFilePath)).Methods("POST")
+	r.HandleFunc("/cgi-bin/json/getVectorEmbeddings", handlePostEmbedding(0)).Methods("POST")
 
 
 	
